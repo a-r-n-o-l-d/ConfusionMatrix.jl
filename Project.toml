@@ -1,7 +1,11 @@
 name = "ConfusionMatrix"
 uuid = "9c2df2b5-cdb8-4855-83e8-e437a0800290"
 authors = ["Arnold"]
-version = "0.1.0"
+version = "0.1.1"
+
+[deps]
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+NamedArrays = "86f7a689-2022-50b4-a561-43c23ac3c673"
 
 [compat]
 julia = "1.6"
