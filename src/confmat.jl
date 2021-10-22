@@ -12,15 +12,17 @@ function ConfMat(l)
     ConfMat(l, m)
 end
 
-function ConfMat(l, a, p)
-    cm = ConfMat(l)
-    push!(cm, a, p)
-end
+# function ConfMat(l, a, p)
+#     cm = ConfMat(l)
+#     push!(cm, a, p)
+#     cm
+# end
 
-function ConfMat(l, a, p; threshold::AbstractFloat)
-    cm = ConfMat(l)
-    push!(cm, a, p, threshold = threshold)
-end
+# function ConfMat(l, a, p; threshold::AbstractFloat)
+#     cm = ConfMat(l)
+#     push!(cm, a, p, threshold = threshold)
+#     cm
+# end
 
 show(io::IO, cm::ConfMat) = show(cm.cmat)
 
