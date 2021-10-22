@@ -5,10 +5,10 @@ using Flux: OneHotMatrix, onecold
 import Base.push!
 import Base.show
 
-export ConfMat, measure
+export ConfMat, metrics
 
 include("confmat.jl")
-include("measure.jl")
+include("metrics.jl")
 
 #=export ConfMatrix
 
