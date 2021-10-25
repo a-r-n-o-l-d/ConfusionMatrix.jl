@@ -15,42 +15,48 @@
 * `:PT` prevalence threshold
 """
 function metrics(cm::ConfMat{2, T}) where T
-    TP = cm.cmat[1, 1] |> float
-    TN = cm.cmat[2, 2] |> float
-    FP = cm.cmat[2, 1] |> float
-    FN = cm.cmat[1, 2] |> float
-    #TP, TN, FP, FN
+    TP = cm.counts[1, 1] |> float
+    TN = cm.counts[2, 2] |> float
+    FP = cm.counts[2, 1] |> float
+    FN = cm.counts[1, 2] |> float
     Dict(:TP => TP, :TN => TN, :FP => FP, :FN => FN)
 end
 
 function metrics(cm::ConfMat)
     TP, TN, FP, FN = [], [], [], []
-    # TN = []
-    # FP = []
-    # FN = []
-    for l ∈ cm.labs
-        push!(TP, cm.cmat[l, l] .|> float)
-        push!(TN, sum(cm.cmat[Not(l), Not(l)]) .|> float)
-        push!(FP, sum(cm.cmat[Not(l), l]) .|> float)
-        push!(FN, sum(cm.cmat[l, Not(l)]) .|> float)
+    for l ∈ cm.labels
+        push!(TP, cm.counts[l, l] .|> float)
+        push!(TN, sum(cm.counts[Not(l), Not(l)]) .|> float)
+        push!(FP, sum(cm.counts[Not(l), l]) .|> float)
+        push!(FN, sum(cm.counts[l, Not(l)]) .|> float)
     end
     Dict(:TP => TP, :TN => TN, :FP => FP, :FN => FN)
 end
 
-function metrics(cm, met...)
-    res = metrics(cm)
-    for m ∈ met
-        if !haskey(res, m)
-            res[m] = _metric(res, m)
-        end
-    end
-    res
+function metrics(cm::ConfMat, met...)
+    metrics(cm) |> m -> metrics!(m, met...)
 end
 
-nozero(x) = begin
-    x = float(x)
-    iszero(x) ? eps(x) : x
+tosymbol(x) = x
+function tosymbol(x::Tuple{Symbol, Real})
+    s, v = x
+    st = string(s) * "_" * string(v)
+    st = replace(st, "." => "_")
+    Symbol(st)
 end
+
+function metrics!(mm::Dict, met...)
+    for m ∈ met
+        if !haskey(mm, m)
+            # F-score special case handling : tuple is transformed to a symbol
+            k = tosymbol(m)
+            mm[k] = metric(mm, m)
+        end
+    end
+    mm
+end
+
+@inline nozero(x) = iszero(float(x)) ? eps(float(x)) : x
 
 #avoidzero2(x::Int) = (avoidzero2(x) |> float)
 
@@ -65,42 +71,39 @@ end
 
 # vérif les formules
 
-_metric(b, m::Symbol) = _metric(b, Val{m}())
+metric(b, m::Symbol) = metric(b, Val{m}())
 
-_metric(b, m::Val{:TPR}) = @. b[:TP] / nozero(b[:TP] + b[:FN])
+metric(b, m::Val{:TPR}) = @. b[:TP] / nozero(b[:TP] + b[:FN])
 
-_metric(b, m::Val{:TNR}) = @. b[:TN] / nozero(b[:TN] + b[:FP])
+metric(b, m::Val{:TNR}) = @. b[:TN] / nozero(b[:TN] + b[:FP])
 
-_metric(b, m::Val{:NPV}) = @. b[:TN] / nozero(b[:TN] + b[:FN])
+metric(b, m::Val{:NPV}) = @. b[:TN] / nozero(b[:TN] + b[:FN])
 
-_metric(b, m::Val{:FNR}) = @. b[:FN] / nozero(b[:FN] + b[:TP])
+metric(b, m::Val{:FNR}) = @. b[:FN] / nozero(b[:FN] + b[:TP])
 
-_metric(b, m::Val{:FPR}) = @. b[:FP] / nozero(b[:FP] + b[:TN])
+metric(b, m::Val{:FPR}) = @. b[:FP] / nozero(b[:FP] + b[:TN])
 
-_metric(b, m::Val{:FDR}) = @. b[:FP] / nozero(b[:FP] + b[:TP])
+metric(b, m::Val{:FDR}) = @. b[:FP] / nozero(b[:FP] + b[:TP])
 
-_metric(b, m::Val{:FOR}) = @. b[:FN] / nozero(b[:FN] + b[:TN])
+metric(b, m::Val{:FOR}) = @. b[:FN] / nozero(b[:FN] + b[:TN])
 
-_metric(b, m::Val{:ACC}) = begin
+metric(b, m::Val{:ACC}) = 
     @. (b[:TP] + b[:TN]) / nozero(b[:TP] + b[:TN] + b[:FP] + b[:FN])
-end
 
-_metric(b, m::Symbol, p) = _metric(b, Val{m}(), p)
+#_metric(b, t::Int) = println("pouet")
 
-_metric(b, t::Tuple{Symbol, Real}) = _metric(b, t...)
+metric(b, m::Symbol, p) = metric(b, Val{m}(), p)
 
-_metric(b, m::Val{:Fscore}, β) = begin
+metric(b, t::Tuple{Symbol, Real}) = metric(b, t...)
+
+metric(b, m::Val{:Fscore}, β) = begin
     a = (1 + β^2)
     @. a * b[:TP] / nozero(a * b[:TP] + β^2 * b[:FN] + b[:FP])
 end
 
-function _metric(b, m::Val{:PT})
-    if !haskey(b, :FPR)
-        b[:FPR] = _metric(b, :FPR)
-    end
-    if !haskey(b, :TPR)
-        b[:TPR] = _metric(b, :TPR)
-    end
-    a = @. sqrt(b[:FPR])
-    @. a / nozero(sqrt(b[:TPR]) + a)
+function metric(b, m::Val{:PT})
+    fpr = haskey(b, :FPR) ? b[:FPR] : metric(b, :FPR)
+    tpr = haskey(b, :TPR) ? b[:TPR] : metric(b, :TPR)
+    a = @. sqrt(fpr)
+    @. a / nozero(sqrt(tpr) + a)
 end

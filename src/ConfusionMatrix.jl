@@ -1,11 +1,12 @@
 module ConfusionMatrix
 
 using NamedArrays
-using Flux: OneHotMatrix, onecold
+#using NamedArrays: NamedMatrix
+using Flux: OneHotArray, OneHotMatrix, onecold
 import Base.push!
 import Base.show
 
-export ConfMat, metrics
+export ConfMat, update!, metrics, metrics!, toidx
 
 include("confmat.jl")
 include("metrics.jl")

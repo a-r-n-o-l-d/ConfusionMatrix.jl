@@ -4,6 +4,10 @@ using Flux: onehotbatch
 
 @testset "ConfusionMatrix.jl" begin
     @testset "ConfMat construction" begin
+
+# ConfMat([:truc, :bidule], [:truc, :truc, :truc, :bidule], [:truc :truc :bidule :bidule])
+# ConfMat([:truc, :bidule, :machin], [:truc, :truc, :truc, :bidule], [:truc :truc :bidule :machin])
+# ConfMat([0 1], [0, 1, 1, 0], [0, 1, 1, 0])
         l = [0 1]
         a = [0 1 1 0]
         p = [0.1 0.8 0.2 0.9]
