@@ -95,10 +95,8 @@ Base.print(cm::ConfMat) = print(cm.counts)
 
 function Base.show(io::IO, cm::ConfMat)
     println(io, summary(cm))
-    #show(io, cm.labels)
     tmp = IOBuffer()
     show(tmp, cm.counts)
-    #println(io)
     sh = String(take!(tmp))
     for l ∈ split(sh, "\n")[2:end]
         println(io, l)
