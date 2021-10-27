@@ -14,11 +14,11 @@ julia> labels = [:dog, :cat]
  julia> ŷ = rand(labels, 100);
  
  julia> cm = ConfMat(labels, y, ŷ)
- ConfMat{2, Symbol}([:dog, :cat], 2×2 Named Matrix{Int64}
+ ConMat{2,Symbol}
  Actual class ╲ Predicted class │ :dog  :cat
  ───────────────────────────────┼───────────
- :dog                           │   24    26
- :cat                           │   24    26)
+ :dog                           │   30    24
+ :cat                           │   21    25
 
 ```
 """
@@ -89,16 +89,16 @@ function labidx(v, l)
 end
 
 summary(cm::ConfMat{N, T}) where {N, T} = 
-    string("Confusion matrix of ", T, " with ", N, " labels ")
+    string("ConMat{", N, ",", T, "}")
 
 Base.print(cm::ConfMat) = print(cm.counts)
 
 function Base.show(io::IO, cm::ConfMat)
-    print(io, summary(cm))
-    show(io, cm.labels)
+    println(io, summary(cm))
+    #show(io, cm.labels)
     tmp = IOBuffer()
     show(tmp, cm.counts)
-    println(io)
+    #println(io)
     sh = String(take!(tmp))
     for l ∈ split(sh, "\n")[2:end]
         println(io, l)
