@@ -50,5 +50,9 @@ using Flux: onehotbatch, softmax
             update!(cm, y, ŷ)
         end
         @test sum(cm.counts) == nepochs * batchsize
+
+        io = IOBuffer()
+        show(io, cm)
+        @test startswith(String(take!(io)), "ConfMat{4,Symbol}")
     end
 end

@@ -14,7 +14,7 @@ julia> labels = [:dog, :cat]
  julia> ŷ = rand(labels, 100);
  
  julia> cm = ConfMat(labels, y, ŷ)
- ConMat{2,Symbol}
+ ConfMat{2,Symbol}
  Actual class ╲ Predicted class │ :dog  :cat
  ───────────────────────────────┼───────────
  :dog                           │   30    24
@@ -89,7 +89,7 @@ function labidx(v, l)
 end
 
 summary(cm::ConfMat{N, T}) where {N, T} = 
-    string("ConMat{", N, ",", T, "}")
+    string("ConfMat{", N, ",", T, "}")
 
 Base.print(cm::ConfMat) = print(cm.counts)
 
