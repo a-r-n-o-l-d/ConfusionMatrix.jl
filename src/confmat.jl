@@ -34,7 +34,6 @@ function ConfMat(labels::Vector, counts::NamedMatrix)
 end
 
 function ConfMat(labels::Vector)
-    #labels = vec(labels)
     n = length(labels)
     c = zeros(Int, n, n)
     c = NamedArray(c, (labels, labels), ("Actual class", "Predicted class"))
