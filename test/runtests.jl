@@ -1,6 +1,6 @@
 using ConfusionMatrix
 using Test
-using Flux: onehotbatch
+using Flux: onehotbatch, softmax
 
 @testset "ConfusionMatrix.jl" begin
     @testset "ConfMat construction" begin
@@ -8,54 +8,47 @@ using Flux: onehotbatch
 # ConfMat([:truc, :bidule], [:truc, :truc, :truc, :bidule], [:truc :truc :bidule :bidule])
 # ConfMat([:truc, :bidule, :machin], [:truc, :truc, :truc, :bidule], [:truc :truc :bidule :machin])
 # ConfMat([0 1], [0, 1, 1, 0], [0, 1, 1, 0])
-        l = [0 1]
-        a = [0 1 1 0]
-        p = [0.1 0.8 0.2 0.9]
-        cm = ConfMat(l)
-        push!(cm, a, p, threshold = 0.5)
-        @test cm.cmat[1, 1] == 1
-        @test cm.cmat[2, 2] == 1
 
-        l = [0, 1]
-        a = [0, 1, 1, 0]
-        p = [0.1, 0.8, 0.2, 0.9]
-        cm = ConfMat(l)
-        push!(cm, a, p, threshold = 0.5)
-        @test cm.cmat[1, 1] == 1
-        @test cm.cmat[2, 2] == 1
+        labels = [:dog, :cat]
+        y = rand(labels, 100)
+        ŷ = rand(labels, 100)
+        cm = ConfMat(labels, y, ŷ)
+        @test size(cm.counts) == (2, 2)
 
-        l = [:truc, :bidule, :machin]
-        a = onehotbatch([:truc, :machin, :truc, :machin], l)
-        p = [0.8 0.2 0.3 0.5; 0.1 0.1 0.9 0.2; 0.1 0.1 0.1 0.1]
-        cm = ConfMat(l)
-        push!(cm, a, p)
-        @test cm.cmat[3, 1] == 2
+        labels = [:dog, :cat, :frog]
+        y = rand(labels, 100)
+        ŷ = rand(labels, 100)
+        cm = ConfMat(labels, y, ŷ)
+        @test size(cm.counts) == (3, 3)
 
-        p = onehotbatch([:truc, :truc, :machin, :bidule, :bidule], l)
-        cm = ConfMat(l)
-        @test_throws DimensionMismatch push!(cm, a, p)
+        labels = [1, 2, 3, 4, 5]
+        y = rand(labels, 100)
+        ŷ = rand(labels, 100)
+        cm = ConfMat(labels, y, ŷ)
+        @test size(cm.counts) == (5, 5)
 
-        a = [:truc, :machin, :truc, :machin]
-        p = [:truc, :truc, :machin, :chouette]
-        cm = ConfMat(l)
-        @test_throws ArgumentError push!(cm, a, p)
+        # Simulate the ouput of a Flux binary classifier
+        labels = [:dog, :cat]
+        cm = ConfMat(labels)
+        nepochs = 10
+        batchsize = 64
+        for e ∈ 1:nepochs
+            y = onehotbatch(rand(labels, batchsize), labels)
+            ŷ = rand(1, batchsize)
+            update!(cm, y, ŷ)
+        end
+        @test sum(cm.counts) == nepochs * batchsize
 
-        a = [:truc, :machin, :machin, :bidule]
-        p = [:truc, :truc, :machin, :bidule]
-        cm = ConfMat(l)
-        push!(cm, a, p)
-        @test cm.cmat[1, 1] == 1
-        @test cm.cmat[2, 2] == 1
-        @test cm.cmat[3, 3] == 1
-
-
-        l = [1, 2, 3]
-        a = [3, 1, 2, 3]
-        p = [3, 2, 2, 3]
-        cm = ConfMat(l)
-        push!(cm, a, p)
-        @test cm.cmat[1, 1] == 0
-        @test cm.cmat[2, 2] == 1
-        @test cm.cmat[3, 3] == 2
+        # Simulate the ouput of a Flux multiclass classifier
+        labels = [:dog, :cat, :frog, :bear]
+        cm = ConfMat(labels)
+        nepochs = 10
+        batchsize = 64
+        for e ∈ 1:nepochs
+            y = onehotbatch(rand(labels, batchsize), labels)
+            ŷ = rand(4, batchsize) |> softmax
+            update!(cm, y, ŷ)
+        end
+        @test sum(cm.counts) == nepochs * batchsize
     end
 end

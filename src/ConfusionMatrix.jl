@@ -3,7 +3,8 @@ module ConfusionMatrix
 using NamedArrays
 #using NamedArrays: NamedMatrix
 using Flux: OneHotArray, OneHotMatrix, onecold
-import Base.push!
+#import Base.push!
+import Base.summary
 import Base.show
 
 export ConfMat, update!, metrics, metrics!, toidx
