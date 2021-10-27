@@ -88,8 +88,7 @@ function labidx(v, l)
     Vector{Int}(i)
 end
 
-summary(cm::ConfMat{N, T}) where {N, T} = 
-    string("ConfMat{", N, ",", T, "}")
+summary(cm::ConfMat{N, T}) where {N, T} = string("ConfMat{", N, ",", T, "}")
 
 Base.print(cm::ConfMat) = print(cm.counts)
 
