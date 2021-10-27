@@ -88,6 +88,19 @@ function labidx(v, l)
     Vector{Int}(i)
 end
 
-function summary(io::IO, cm::ConfMat{N, T}) where {N, T}
-    Base.dims2string(size(cm.counts)) * string(" Named ", T)
+summary(cm::ConfMat{N, T}) where {N, T} = 
+    string("Confusion matrix of ", T, " with ", N, " labels ")
+
+Base.print(cm::ConfMat) = print(cm.counts)
+
+function Base.show(io::IO, cm::ConfMat)
+    print(io, summary(cm))
+    show(io, cm.labels)
+    tmp = IOBuffer()
+    show(tmp, cm.counts)
+    println(io)
+    sh = String(take!(tmp))
+    for l ∈ split(sh, "\n")[2:end]
+        println(io, l)
+    end
 end
